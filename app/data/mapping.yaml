@@ -1,0 +1,51 @@
+# Configuration de l'extraction des champs OpenAgenda
+event_fields:
+  # Informations principales
+  - label: "Titre"
+    api_key: "title_fr"
+    default: "Sans titre"
+  - label: "Description"
+    api_key: "description_fr"
+    default: ""
+  - label: "Détails"
+    api_key: "longdescription_fr"
+    default: ""
+  # Localisation
+  - label: "Lieu"
+    api_key: "location_name"
+    default: ""
+  - label: "Adresse"
+    api_key: "location_address"
+    default: ""
+  - label: "Ville"
+    api_key: "location_city"
+    default: ""
+  # Couverture temporelle
+  - label: "Début"
+    api_key: "firstdate_begin"
+    default: ""
+  - label: "Fin"
+    api_key: "lastdate_end"
+    default: ""
+  # Accessibilité
+  - label: "handicap"
+    api_key: "accessibility_label_fr"
+    default: []
+  - label: "Age_min"
+    api_key: "age_min"
+    default: 0
+  - label: "Age_max"
+    api_key: "age_max"
+    default: 200
+  # Contact
+  - label: "Téléphone"
+    api_key: "location_phone"
+    default: ""
+  - label: "Site web"
+    api_key: "location_website"
+    default: ""
+
+# Configuration des métadonnées pour FAISS
+metadata_fields:
+  uid: "uid"
+  url: "canonicalurl"

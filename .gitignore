@@ -45,6 +45,7 @@ db_connection_test.py
 htmlcov
 .coverage
 notebooks/
+README_.md
 
 # Données
 datas/
