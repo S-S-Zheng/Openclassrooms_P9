@@ -22,29 +22,29 @@ from app.rag.rag_pipeline import EventRAGPipeline
 
 
 async def test_rag():
-    # -------------------- Charger la configuration --------------------
-    # Bien que get_settings serve de pilier centrale aux vars, il faut charger .env afin qu'il
-    # ne passe pas que par les valeurs par défaut.
-    # load_dotenv()
-    settings = get_settings()
-    print("--- Configuration chargée ---")
+    # # -------------------- Charger la configuration --------------------
+    # # Bien que get_settings serve de pilier centrale aux vars, il faut charger .env afin qu'il
+    # # ne passe pas que par les valeurs par défaut.
+    # # load_dotenv()
+    # settings = get_settings()
+    # print("--- Configuration chargée ---")
 
-    # -------------------- Fetcher (Raw data) --------------------
-    fetcher = OpenAgendaFetcher(settings)
-    print(f"Récupération des événements pour {settings.openagenda_location_city}...")
-    raw_events = await fetcher.fetch_events()
-    print(f"{len(raw_events)} événements bruts récupérés.")
+    # # -------------------- Fetcher (Raw data) --------------------
+    # fetcher = OpenAgendaFetcher(settings)
+    # print(f"Récupération des événements pour {settings.openagenda_location_city}...")
+    # raw_events = await fetcher.fetch_events()
+    # print(f"{len(raw_events)} événements bruts récupérés.")
 
-    # # Sauvegarde le JSON brut pour inspection
-    # import json
-    # with open("debug_raw_events.json", "w", encoding="utf-8") as f:
-    #     json.dump(raw_events, f, indent=4, ensure_ascii=False)
-    # print(f"Fichier debug_raw_events.json créé avec {len(raw_events)} événements.")
+    # # # Sauvegarde le JSON brut pour inspection
+    # # import json
+    # # with open("debug_raw_events.json", "w", encoding="utf-8") as f:
+    # #     json.dump(raw_events, f, indent=4, ensure_ascii=False)
+    # # print(f"Fichier debug_raw_events.json créé avec {len(raw_events)} événements.")
 
-    # -------------------- Processor (Nettoyage et Chunking) --------------------
-    processor = EventDocumentProcessor(settings)
-    documents = processor.process(raw_events)
-    print(f"{len(documents)} documents prêts pour l'indexation.")
+    # # -------------------- Processor (Nettoyage et Chunking) --------------------
+    # processor = EventDocumentProcessor(settings)
+    # documents = processor.process(raw_events)
+    # print(f"{len(documents)} documents prêts pour l'indexation.")
 
     # # -------------------- Embedding (Indexation) --------------------
     # print("Vectorisation en cours avec Mistral (prend un café)...")
@@ -73,25 +73,48 @@ async def test_rag():
     # print("\nIndex sauvegardé dans le dossier 'faiss_index_test'.")
 
     # ===============================================================
-    # instanciation rag
+    # ========================= Charger la configuration =========================
+    settings = get_settings()
     rag = EventRAGPipeline(settings)
-    # Indexation
-    await rag.build_index(documents)
-    # query
-    question = str(
-        input("Pose une question\n")
-    )  # "Existe-t-il des activités pour enfants à Paris ?"
-    recup_k = int(input("Combien de résultats veux-tu?\n"))
-    print(f"\n--- Question ---\n{question}\n--- k: {recup_k} ---\n")
-    response = await rag.query(question, top_k=recup_k)
-    print("-" * 50)
-    print(response["answer"])
-    print("-" * 50)
-    for i, doc in enumerate(response["source_documents"]):
-        score = response["scores"][i]
-        print(f"\nSource #{i + 1} (Score: {score:.4f}):")
-        print(f"Titre : {doc.event_fields.get('Titre', 'N/A')}")
-        print(f"URL : {doc.metadata.get('url')}")
+
+    # ========================= INDEX FAISS =========================
+    if not await rag.load_index():
+        print("Index absent. Lancement du process ETL...")
+        # -------------------- Fetcher (Raw data) --------------------
+        fetcher = OpenAgendaFetcher(settings)
+        print(f"Récupération des événements pour {settings.openagenda_location_city}...")
+        raw_events = await fetcher.fetch_events()
+        print(f"{len(raw_events)} événements bruts récupérés.")
+        # -------------------- Processor (Nettoyage et Chunking) --------------------
+        processor = EventDocumentProcessor(settings)
+        documents = processor.process(raw_events)
+        print(f"{len(documents)} documents prêts pour l'indexation.")
+        # -------------------- Embedding (Indexation) --------------------
+        await rag.build_index(documents)
+        await rag.save_index()
+    else:
+        print("Index chargé depuis le disque.")
+
+    # ========================= QUERIES =========================
+    # Boucle de questionnement (maintient le test tant que TRUE)
+    while True:
+        # Question utilisateur + k
+        question = str(input("Pose une question (ou q pour sortir)\n"))
+        if question.lower() == "q":
+            break
+        recup_k = int(input("Combien de résultats veux-tu?\n"))
+        print(f"\n--- Question ---\n{question}\n--- k: {recup_k} ---\n")
+
+        # Réponse
+        response = await rag.query(question, top_k=recup_k)
+        print("-" * 50)
+        print(response["answer"])
+        print("-" * 50)
+        for i, doc in enumerate(response["source_documents"]):
+            score = response["scores"][i]
+            print(f"\nSource #{i + 1} (Score: {score:.4f}):")
+            print(f"Titre : {doc.metadata.get('titre', 'N/A')}")
+            print(f"URL : {doc.metadata.get('url')}")
 
 
 # =======================================================

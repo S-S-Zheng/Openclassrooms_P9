@@ -24,7 +24,7 @@ event_fields:
     default: ""
   - label: "Accessibilité"
     api_key: "location_access_fr"
-    defaut: ""
+    default: ""
 
 # PARTIE LOGIQUE
 # On y stocke les métadonnées qui vont servir de filtre logique. En gros si la donnée peut
