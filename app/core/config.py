@@ -52,9 +52,15 @@ class Settings(BaseSettings):
     """OBLIGATOIRE: CLEF API POUR MISTRAL (CRASH SI ABSENT)"""
     llm_model: str = "devstral-small-latest"
     """'devstral-small-latest', 'devstral-medium-latest' ou 'devstral-latest'"""
+    llm_temperature: float = 0.1
+    """Contrôle le côté factuel (faible valeur, conseillé 0.2) ou imaginaire du modèle """
+    llm_max_tokens: int = 1024
+    """Nb max de tokens à générer """
+    llm_top_p: float = 0.9
+    """Contrôle le ciblage des résultats (valeur conseillé 0.9)"""
     embed_model: str = "mistral-embed"
-    chunk_size: int = 100
-    chunk_overlap: int = 20
+    chunk_size: int = 500
+    chunk_overlap: int = 100
     # =================== OpenAgenda ===================================
     openagenda_public_url: str
     """OBLIGATOIRE: URL OPEN AGENDA POUR FETCH DONNEES (CRASH SI ABSENT)"""
@@ -62,9 +68,14 @@ class Settings(BaseSettings):
     openagenda_location_city: Optional[Union[List[str], str]] = "Paris"
     openagenda_location_region: Optional[Union[List[str], str]] = "Île-de-France"
     openagenda_limit: int = 20
+    """Limite du nombre de résultats"""
     openagenda_offset: int = 0
+    """Index du premier résultat renvoyé"""
     openagenda_lang: Optional[str] = "fr"
+    """Code langue de 2 lettres"""
     openagenda_timezone: Optional[Union[List[str], str]] = "Europe/Berlin"
+    """Le fuseau horaire utilisé pour interpréter les dates et heures dans la requête et
+    les données de la réponse."""
     openagenda_max_events: int = 50
     """Nb max events a ingérer par ré-indexation (/rebuild)."""
 
@@ -86,7 +97,7 @@ class Settings(BaseSettings):
 
     # ================= CONFIG ===============================================
     model_config = SettingsConfigDict(
-        env_file=".env" if app_env == "production" else ".env.test",
+        env_file=(".env.test", ".env"),  # Lit .env.test s'il existe, sinon .env
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",  # Ignore les variables inconnues

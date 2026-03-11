@@ -1,4 +1,9 @@
-# Configuration de l'extraction des champs OpenAgenda
+# PARTIE SEMANTIQUE
+# C'est le champ brute qui va servir à contextualiser les evenements. FAISS embbed ce champ,
+# il vaut mieux donc limiter au strict contexte surtout qu'il est mauvais pour "donner du sens"
+# aux chiffres (2ans ou 20ans c'est contextuellement/dimensionnellement identique).
+# ex a quoi ca va ressembler pour le LLM:
+# "Titre: Atelier Peinture | Ville: Paris | Age_min: 2 | Téléphone: 0102030405 | Prix: Gratuit..."
 event_fields:
   # Informations principales
   - label: "Titre"
@@ -14,38 +19,32 @@ event_fields:
   - label: "Lieu"
     api_key: "location_name"
     default: ""
-  - label: "Adresse"
-    api_key: "location_address"
-    default: ""
   - label: "Ville"
     api_key: "location_city"
     default: ""
-  # Couverture temporelle
-  - label: "Début"
-    api_key: "firstdate_begin"
-    default: ""
-  - label: "Fin"
-    api_key: "lastdate_end"
-    default: ""
-  # Accessibilité
-  - label: "handicap"
-    api_key: "accessibility_label_fr"
-    default: []
-  - label: "Age_min"
-    api_key: "age_min"
-    default: 0
-  - label: "Age_max"
-    api_key: "age_max"
-    default: 200
-  # Contact
-  - label: "Téléphone"
-    api_key: "location_phone"
-    default: ""
-  - label: "Site web"
-    api_key: "location_website"
-    default: ""
+  - label: "Accessibilité"
+    api_key: "location_access_fr"
+    defaut: ""
 
-# Configuration des métadonnées pour FAISS
+# PARTIE LOGIQUE
+# On y stocke les métadonnées qui vont servir de filtre logique. En gros si la donnée peut
+# peut être vu comme des conditions claires, on l'a met ici.
 metadata_fields:
   uid: "uid"
   url: "canonicalurl"
+  titre: "title_fr"
+  # Lieu
+  city: "location_city"
+  address: "location_address"
+  access: "location_access_fr"
+  # Conditions
+  age_min: "age_min"
+  age_max: "age_max"
+  handicap: "accessibility_label_fr"
+  price: "condition_fr"
+  # Periode
+  date_start: "firstdate_begin"
+  date_end: "lastdate_end"
+  # Contact
+  phone: "location_phone"
+  web: "location_website"

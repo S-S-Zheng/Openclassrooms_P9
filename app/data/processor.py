@@ -182,8 +182,8 @@ class EventDocumentProcessor:
             key
             for key, val in raw_data.items()
             if val in (None, "", [])
-            or (key == "Age_min" and val == 0)
-            or (key == "Age_max" and val == 200)
+            or (key == "Age_min" and val < 0)
+            or (key == "Age_max" and val >= 200)
             or (key in keys_to_skip)
         ]
         for key in keys_to_delete:
@@ -204,10 +204,10 @@ class EventDocumentProcessor:
         # Le contenu qui sera vectorisé au final
         # page_content = "\n".join(final_parts)
         # On place le titre et la description en premier pour qu'ils soient dans le premier chunk
-        content_header = f"TITRE : {title}\nDESCRIPTION : {re.sub(r'<[^<]+?>', '', description)}\n"
+        content_header = f"Titre : {title}\nDescription : {re.sub(r'<[^<]+?>', '', description)}\n"
         content_body = "\n".join(final_parts)
 
-        page_content = f"{content_header}\n\n--- DÉTAILS ---\n{content_body}"
+        page_content = f"{content_header}\n\n--- Détails ---\n{content_body}"
 
         # --- Métadonnées pour la source (pas vectorisé) ---
         # ----------------------------------------------------
@@ -217,10 +217,17 @@ class EventDocumentProcessor:
         #     "title": title,
         # }
         # ----------------------------------------------------
-        metadata: dict[str, Any] = {
-            "uid": event.get(self.mapping["metadata_fields"]["uid"]),
-            "url": event.get(self.mapping["metadata_fields"]["url"]),
-            "title": raw_data.get("Titre", "Sans titre"),
+        # ----------------------------------------------------
+        # metadata: dict[str, Any] = {
+        #     "uid": event.get(self.mapping["metadata_fields"]["uid"]),
+        #     "url": event.get(self.mapping["metadata_fields"]["url"]),
+        #     "title": raw_data.get("Titre", "Sans titre"),
+        # }
+        # ----------------------------------------------------
+        metadata = {
+            key: event.get(api_key)
+            for key, api_key in self.mapping["metadata_fields"].items()
+            if event.get(api_key) is not None
         }
 
         return Document(page_content=page_content, metadata=metadata)
