@@ -16,7 +16,8 @@ import re
 from pathlib import Path
 from typing import Any
 
-import yaml
+# import yaml
+from app.utils.save_load_datas import load_datas
 
 # C'est l'unité de base de LangChain.
 # Un document contient du texte (page_content) et des infos annexes (metadata)
@@ -109,8 +110,9 @@ class EventDocumentProcessor:
         """
         Charge le yaml de mapping de la donnée
         """
-        with open(MAP_FILE, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
+        # with open(MAP_FILE, "r", encoding="utf-8") as f:
+        #     return yaml.safe_load(f)
+        return load_datas(MAP_FILE)[0]
 
     def _event_to_document(self, event: dict[str, Any]) -> Document:
         """

@@ -114,6 +114,9 @@ class EventRAGPipeline(BaseRAG):
             raise RuntimeError("Pas d'index à save, appeler build_index() d'abord.")
 
         self._index_path.mkdir(parents=True, exist_ok=True)
+        # save_local créée deux fichiers :
+        # index.faiss -> les vecteurs (format binaire FAISS)
+        # index.pkl -> le mapping vecteur | Document (pickle Python)
         await asyncio.to_thread(self._vectorstore.save_local, str(self._index_path))
         logger.info(f"Index sauvegardé dans le dossier {self._index_path}")
 
@@ -261,7 +264,7 @@ class EventRAGPipeline(BaseRAG):
         # ---------------------------------------
         prompt = ChatPromptTemplate.from_template(self._prompt_text)
 
-        # LCEL pipeline
+        # LCEL (LangChain Expression Language) pipeline (se lit de gauche a droite)
         chain = (
             # {
             #     "context": retriever | self._format_docs, #type: ignore
@@ -272,9 +275,9 @@ class EventRAGPipeline(BaseRAG):
                 "context": lambda x: self._format_docs(x["docs"]),
                 "question": lambda x: x["question"],
             }
-            | prompt
-            | self._llm
-            | StrOutputParser()
+            | prompt  # injecte context + question dans le template
+            | self._llm  # envoie le prompt à Mistral
+            | StrOutputParser()  # extrait le texte de la réponse Mistral
         )
         return chain
 

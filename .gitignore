@@ -46,6 +46,9 @@ htmlcov
 .coverage
 notebooks/
 README_.md
+**/old/
 
 # Données
 datas/
+.cache/
+data/

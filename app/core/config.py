@@ -48,6 +48,7 @@ class Settings(BaseSettings):
     """
 
     # ======================== LLM =====================================
+    mistral_base_url: str = "https://api.mistral.ai/v1"  # Nécéssaire pour ragas
     mistral_api_key: str
     """OBLIGATOIRE: CLEF API POUR MISTRAL (CRASH SI ABSENT)"""
     llm_model: str = "devstral-small-latest"
@@ -97,7 +98,7 @@ class Settings(BaseSettings):
 
     # ================= CONFIG ===============================================
     model_config = SettingsConfigDict(
-        env_file=(".env.test", ".env"),  # Lit .env.test s'il existe, sinon .env
+        env_file=(".env", ".env.test"),  # .env.test écrase .env s'il existe parfait pour dev
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",  # Ignore les variables inconnues

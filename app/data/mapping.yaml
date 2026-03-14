@@ -4,38 +4,55 @@
 # aux chiffres (2ans ou 20ans c'est contextuellement/dimensionnellement identique).
 # ex a quoi ca va ressembler pour le LLM:
 # "Titre: Atelier Peinture | Ville: Paris | Age_min: 2 | Téléphone: 0102030405 | Prix: Gratuit..."
+# EN SOMME CETTE PARTIE CONCERNE LES INFORMATIONS QUE LE LLM VA LIRE ET RECUP' LES INFOS.
 event_fields:
   # Informations principales
   - label: "Titre"
     api_key: "title_fr"
-    default: "Sans titre"
-  - label: "Description"
-    api_key: "description_fr"
     default: ""
   - label: "Détails"
     api_key: "longdescription_fr"
     default: ""
   # Localisation
-  - label: "Lieu"
-    api_key: "location_name"
+  - label: "Adresse"
+    api_key: "location_address"
     default: ""
   - label: "Ville"
     api_key: "location_city"
     default: ""
-  - label: "Accessibilité"
+  # Contact
+  - label: "Téléphone"
+    api_key: "location_phone"
+    default: ""
+  - label: "Web"
+    api_key: "location_website"
+    default: ""
+  # Autres
+  - label: "Acces"
     api_key: "location_access_fr"
+    default: ""
+  - label: "handicap"
+    api_key: "accessibility_label_fr"
+    default: "accessibilité réduite"
+  - label: "Prix"
+    api_key: "condition_fr"
     default: ""
 
 # PARTIE LOGIQUE
-# On y stocke les métadonnées qui vont servir de filtre logique. En gros si la donnée peut
-# peut être vu comme des conditions claires, on l'a met ici.
+# On y stocke les métadonnées qui vont servir de filtre logique.
+# C'EST LA PARTIE QUI VA CONTROLER LA PERTINENCE DES SOURCES A FOURNIR AU LLM. ATTENTION, SI
+# L'INFO N'EST PRESENTE QU'ICI, LE LLM N'Y AURA PAS ACCES!
+
 metadata_fields:
   uid: "uid"
   url: "canonicalurl"
   titre: "title_fr"
+  description: "description_fr"
+  keywords: "keywords_fr"
   # Lieu
   city: "location_city"
   address: "location_address"
+  venue: "location_name"
   access: "location_access_fr"
   # Conditions
   age_min: "age_min"
