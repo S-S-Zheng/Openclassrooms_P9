@@ -98,7 +98,7 @@ class Settings(BaseSettings):
 
     # ================= CONFIG ===============================================
     model_config = SettingsConfigDict(
-        env_file=(".env", ".env.test"),  # .env.test écrase .env s'il existe parfait pour dev
+        env_file=(".env"),
         env_file_encoding="utf-8",
         case_sensitive=False,
         extra="ignore",  # Ignore les variables inconnues
@@ -121,4 +121,4 @@ def get_settings() -> Settings:
     L'utilisation de lru_cache garanti que l'.env n'est lu qu'une fois et que tous les modules
     recoivent exactement le même objet.
     """
-    return Settings()  # type:ignore
+    return Settings()  # type:ignore # pragma: no cover

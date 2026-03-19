@@ -31,7 +31,7 @@ event_fields:
   - label: "Acces"
     api_key: "location_access_fr"
     default: ""
-  - label: "handicap"
+  - label: "Handicap"
     api_key: "accessibility_label_fr"
     default: "accessibilité réduite"
   - label: "Prix"

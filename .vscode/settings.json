@@ -3,5 +3,10 @@
   "python.terminal.activateEnvironment": true,
   "jupyter.defaultKernel": "Python (livrable_P9)",
   "editor.formatOnSave": true,
-  "python.analysis.typeCheckingMode": "basic"
+  "python.analysis.typeCheckingMode": "basic",
+  "python.testing.pytestArgs": [
+    "app"
+  ],
+  "python.testing.unittestEnabled": false,
+  "python.testing.pytestEnabled": true
 }

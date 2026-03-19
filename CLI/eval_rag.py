@@ -385,7 +385,7 @@ async def main(qa_file: Path) -> None:
 # ======================================================================
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     parser = argparse.ArgumentParser(description="Evalue le RAG en utilisant des métriques RAGAS")
     parser.add_argument(
         "--qa-file",

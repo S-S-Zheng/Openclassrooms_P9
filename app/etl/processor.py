@@ -16,9 +16,6 @@ import re
 from pathlib import Path
 from typing import Any
 
-# import yaml
-from app.utils.save_load_datas import load_datas
-
 # C'est l'unité de base de LangChain.
 # Un document contient du texte (page_content) et des infos annexes (metadata)
 from langchain_core.documents import Document
@@ -28,6 +25,9 @@ from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.core.config import Settings
+
+# import yaml
+from app.utils.save_load_datas import load_datas
 
 logger = logging.getLogger(__name__)
 
@@ -84,6 +84,9 @@ class EventDocumentProcessor:
         documents: list[Document] = []
 
         for event in raw_events:
+            if not event or not isinstance(event, dict):
+                logger.warning("Événement ignoré : l'entrée est vide ou n'est pas un dictionnaire.")
+                continue
             try:
                 doc = self._event_to_document(event)
                 # Si l'événement est trop pauvre en info, doc peut être None
@@ -97,7 +100,7 @@ class EventDocumentProcessor:
                 else:
                     documents.append(doc)
             except Exception as exc:
-                # Malformed events are skipped, not fatal
+                # Si l'event est corrompu par exemple chunking interrompu etc...
                 logger.warning(f"Événement ignoré (uid={event.get('uid')}): {exc}")
                 continue
 
@@ -130,6 +133,10 @@ class EventDocumentProcessor:
         Document
             Document langchain avec page_content et metadata
         """
+        # On rejette tout document ne contenant pas à minima ces informations
+        if not event.get("title_fr") or not event.get("longdescription_fr") or not event.get("uid"):
+            return None  # type:ignore
+
         # --- Extraction des données (API publique) ---
         # Informations principales
         # -------------------------

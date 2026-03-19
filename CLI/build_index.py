@@ -20,8 +20,8 @@ if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
 from app.core.config import get_settings
-from app.data.fetcher import OpenAgendaFetcher
-from app.data.processor import EventDocumentProcessor
+from app.etl.fetcher import OpenAgendaFetcher
+from app.etl.processor import EventDocumentProcessor
 from app.rag.rag_pipeline import EventRAGPipeline
 
 # Configuration du logger pour l'affichage console
@@ -100,7 +100,7 @@ async def indexation() -> None:
 # ================================================================
 
 
-if __name__ == "__main__":
+if __name__ == "__main__": # pragma: no cover
     try:
         asyncio.run(indexation())
     except KeyboardInterrupt:
