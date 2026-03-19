@@ -6,6 +6,7 @@ Tous les appels API Mistral (embeddings + LLM) sont interceptés par la fixture
 véritable index FAISS construit à partir d'embeddings fictifs mais déterministes.
 """
 
+# imports
 from __future__ import annotations
 
 from unittest.mock import MagicMock, patch
@@ -14,16 +15,14 @@ import pytest
 
 from app.rag.rag_pipeline import EventRAGPipeline
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# is_ready et document_count
-# ═══════════════════════════════════════════════════════════════════════════════
+# ========================================================================
 
 
-@pytest.mark.unit
-class TestReadiness:
-    """Tests pour la gestion de l'état de ``is_ready()`` et ``document_count()``."""
+class TestEventRAGPipeline:
+    # ======================== ``is_ready()`` =================================
 
-    # ----------------
+    # ---------------- Vérifie que ``is_ready()`` ne l'est pas sans vérification d'index
+    @pytest.mark.unit
     def test_not_ready_before_index(self, fake_settings):
         """Un pipeline fraîchement instancié ne doit pas être prêt."""
         with (
@@ -35,26 +34,22 @@ class TestReadiness:
         assert pipeline.is_ready() is False
         assert pipeline.document_count() == 0
 
-    # ----------------
+    # ---------------- Vérifie que ``is_ready()`` l'est après indexation
+    @pytest.mark.unit
     def test_ready_after_index_injected(self, rag_pipeline_with_index):
         """Un pipeline avec un store FAISS injecté doit être déclaré prêt."""
         assert rag_pipeline_with_index.is_ready() is True
 
-    # ----------------
+    # ---------------- Tests pour la gestion de l'état de ``document_count()``
+    @pytest.mark.unit
     def test_document_count_matches_fixture(self, rag_pipeline_with_index, sample_documents):
         """``document_count()`` doit être égal au nombre de documents injectés."""
         assert rag_pipeline_with_index.document_count() == len(sample_documents)
 
+    # ======================== ``_format_docs()`` ====================================
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# _format_docs
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
-@pytest.mark.unit
-class TestFormatDoc:
-    """Tests pour la gestion de l'état de ``_format_docs()``."""
-
+    # ---------------- Vérifie la sortie de ``_format_docs()``
+    @pytest.mark.unit
     def test_format_docs_output(self, sample_documents):
         """Vérifie que le formatage des documents pour le prompt est correct."""
         from app.rag.rag_pipeline import EventRAGPipeline
@@ -72,17 +67,10 @@ class TestFormatDoc:
         # Vérifie le double saut de ligne entre les sections
         assert "\n\n" in formatted_text
 
+    # ======================= ``build_index()`` ===============================
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# build_index
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
-@pytest.mark.integration
-class TestBuildIndex:
-    """Tests pour la méthode ``build_index()``."""
-
-    # ----------------
+    # ---------------- Vérifie que la pipeline est opérationnelle après ``build_index()``
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_build_index_sets_ready(self, fake_settings, sample_documents, fake_embeddings):
         """Après ``build_index()``, le pipeline doit être prêt."""
@@ -104,7 +92,8 @@ class TestBuildIndex:
         assert pipeline.is_ready() is True
         assert pipeline.document_count() == len(sample_documents)
 
-    # ----------------
+    # ---------------- Vérifie qu'une erreur est levée si vide
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_build_index_raises_on_empty(self, fake_settings):
         """``build_index([])`` doit lever une ``ValueError``."""
@@ -117,17 +106,10 @@ class TestBuildIndex:
         with pytest.raises(ValueError, match="vide"):
             await pipeline.build_index([])
 
+    # ======================= ``save_index()`` =======================
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# save_index / load_index
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
-@pytest.mark.integration
-class TestPersistence:
-    """Tests pour les méthodes ``save_index()`` et ``load_index()``."""
-
-    # ----------------
+    # ---------------- Vérifie la persistence avec sauvegade sur disque si ``save_index()``
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_save_calls_save_local(self, rag_pipeline_with_index, tmp_path):
         """``save_index()`` doit invoquer ``FAISS.save_local`` avec le bon chemin."""
@@ -138,7 +120,8 @@ class TestPersistence:
 
         rag_pipeline_with_index._vectorstore.save_local.assert_called_once()
 
-    # ----------------
+    # ---------------- Vérifie que ``save_index()`` lève une erreur si pas d'index
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_save_raises_when_no_index(self, fake_settings):
         """``save_index()`` doit lever une ``RuntimeError`` si aucun index n'existe."""
@@ -151,7 +134,10 @@ class TestPersistence:
         with pytest.raises(RuntimeError, match="Pas d'index"):
             await pipeline.save_index()
 
-    # ----------------
+    # ======================= ``load_index()`` =======================
+
+    # ---------------- Vérifie que ``load_index()`` lève une erreur si pas d'index
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_load_returns_false_when_missing(self, fake_settings, tmp_path):
         """``load_index()`` doit retourner ``False`` quand les fichiers d'index sont absents."""
@@ -166,7 +152,8 @@ class TestPersistence:
         assert result is False
         assert pipeline.is_ready() is False
 
-    # ----------------
+    # ---------------- Vérifie que le chargement ``load_index()`` a réussi si index
+    @pytest.mark.integration
     @pytest.mark.asyncio
     async def test_load_returns_true_when_index_exists(
         self, fake_settings, tmp_path, fake_embeddings
@@ -194,17 +181,10 @@ class TestPersistence:
         assert pipeline.is_ready() is True
         assert pipeline.document_count() == 42
 
+    # ======================= ``query()`` ====================================
 
-# ═══════════════════════════════════════════════════════════════════════════════
-# query
-# ═══════════════════════════════════════════════════════════════════════════════
-
-
-@pytest.mark.functional
-class TestQuery:
-    """Tests pour la méthode ``query()``."""
-
-    # ----------------
+    # ---------------- Vérifie que ``query()`` ne marche pas si pipeline non initialisée
+    @pytest.mark.functional
     @pytest.mark.asyncio
     async def test_query_raises_when_not_ready(self, fake_settings):
         """Appeler ``query()`` sur un pipeline non initialisé doit lever une ``RuntimeError``."""
@@ -217,7 +197,8 @@ class TestQuery:
         with pytest.raises(RuntimeError, match="pas opérationnel"):
             await pipeline.query("Test ?")
 
-    # ----------------
+    # ---------------- Vérifie les sortie de ``query()``
+    @pytest.mark.functional
     @pytest.mark.asyncio
     async def test_query_returns_expected_keys(
         self, rag_pipeline_with_index, sample_documents, fake_llm_response
@@ -240,7 +221,8 @@ class TestQuery:
         assert len(result["source_documents"]) == 1
         assert abs(result["scores"][0] - 0.92) < 1e-6
 
-    # ----------------
+    # ---------------- Vérifie que answer de ``query()`` retourne bien une chaîne de caractère
+    @pytest.mark.functional
     @pytest.mark.asyncio
     async def test_query_answer_is_string(
         self, rag_pipeline_with_index, sample_documents, fake_llm_response

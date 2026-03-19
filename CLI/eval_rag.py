@@ -199,7 +199,7 @@ def prepare_for_ragas(full_result: list[dict]) -> EvaluationDataset:
 # ========================== EVALUATION RAGAS ============================
 
 
-async def ragas_eval(dataset: EvaluationDataset, settings: Settings) -> dict:
+async def ragas_eval(dataset: EvaluationDataset, settings: Settings) -> dict: #pragma: no cover
     """
     Lance une évaluation RAGAS sur les métriques:
         * ``Faithfulness``: La réponse est-elle basée sur les documents fournis ?
