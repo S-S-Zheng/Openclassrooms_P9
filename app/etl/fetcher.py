@@ -13,7 +13,7 @@ import logging
 from typing import Any
 
 import httpx
-from tenacity import retry, stop_after_attempt, wait_exponential
+from tenacity import retry, retry_if_exception, stop_after_attempt, wait_exponential
 
 from app.core.config import Settings
 
@@ -39,7 +39,9 @@ class OpenAgendaFetcher:
         # self._key = settings.openagenda_public_key
         self._url = settings.openagenda_public_url
         self._max_events = settings.openagenda_max_events
-        self._year = settings.openagenda_updatedat
+        # self._year = settings.openagenda_updatedat
+        self._order_by = settings.openagenda_order_by
+        self._firstdate_begin = settings.openagenda_firstdate_begin
         self._city = settings.openagenda_location_city
         self._region = settings.openagenda_location_region
         self._limit = settings.openagenda_limit
@@ -85,6 +87,10 @@ class OpenAgendaFetcher:
     @retry(
         stop=stop_after_attempt(3),
         wait=wait_exponential(multiplier=1, min=2, max=10),
+        retry=retry_if_exception(
+            lambda exc: isinstance(exc, httpx.HTTPStatusError) and exc.response.status_code != 400
+        ),  # On ajoute une condition afin que retry ne retente pas si code 400 (syntaxe URL)
+        # On ne teste que les erreur 5XX (serveur) et 429 (quota)
         reraise=True,
     )  # Décorateur pour ré essayer en augmentant les temps d'attente
     async def _fetch_page(
@@ -107,13 +113,18 @@ class OpenAgendaFetcher:
         dict[str, Any]
             Corpus brute de la réponse API
         """
-        where_clause = (
-            f'location_city:"{self._city}" AND location_region:"{self._region}" AND "{self._year}"'
-        )
+        # where_clause = (
+        #    f'location_city:"{self._city}" AND location_region:"{self._region}" AND "{self._year}"'
+        # )
+        refine_clause = [
+            f"location_city:{self._city}",
+            f"location_region:{self._region}",
+            f"firstdate_begin:{self._firstdate_begin}",
+        ]
         params: dict[str, Any] = {
-            "order_by": "updatedat desc",  # Trier par les plus récents
+            "order_by": self._order_by,  # Trier par les plus récents
             # Le paramètre 'where' est plus puissant que 'refine' pour les filtres complexes
-            "where": where_clause,
+            # "where": where_clause,
             # "updatedat": self._year,
             # "location_city": self._city,
             # "location_region": self._region,
@@ -121,6 +132,7 @@ class OpenAgendaFetcher:
             # "refine": [
             #     f"location_region:{self._region}"
             # ],
+            "refine": refine_clause,
             "limit": self._limit,
             "offset": offset,  # Utilise l'offset passé par la boucle
             "lang": self._lang.lower() if self._lang is not None else self._lang,

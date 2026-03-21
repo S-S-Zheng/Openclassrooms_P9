@@ -1,5 +1,5 @@
 """
-scripts/eval_rag.py
+CLI/eval_rag.py
 
 Script CLI autonome qui évalue le système RAG via le framework RAGAS.
 

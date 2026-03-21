@@ -182,10 +182,12 @@ class EventDocumentProcessor:
         # if phone: parts.append(f"Téléphone : {phone}")
         # if website: parts.append(f"Site web : {website}")
         # ----------------------------------------------------
-        # On sécurise titre et description
-        title = str(raw_data.get("Titre", "Sans titre")).strip()
-        description = str(raw_data.get("Description", "")).strip()
-        keys_to_skip = ["Titre", "Description"]
+        # On sécurise titre et description pour le header
+        title = str(raw_data.pop("Titre", "")).strip()
+        description = str(raw_data.pop("Description", "")).strip()
+        short = re.sub(r"<[^<]+?>", "", description)
+
+        # keys_to_skip = ["Titre", "Description"]
         # On élimine les clés inutiles d'un coup
         keys_to_delete = [
             key
@@ -193,10 +195,11 @@ class EventDocumentProcessor:
             if val in (None, "", [])
             or (key == "Age_min" and val < 0)
             or (key == "Age_max" and val >= 200)
-            or (key in keys_to_skip)
+            # or (key in keys_to_skip)
         ]
         for key in keys_to_delete:
             del raw_data[key]
+
         # Nettoyage et formatage final de chaque champ
         final_parts = [
             # Suppr les balise HTML si str + <
@@ -213,10 +216,17 @@ class EventDocumentProcessor:
         # Le contenu qui sera vectorisé au final
         # page_content = "\n".join(final_parts)
         # On place le titre et la description en premier pour qu'ils soient dans le premier chunk
-        content_header = f"Titre : {title}\nDescription : {re.sub(r'<[^<]+?>', '', description)}\n"
+        # content_header = \
+        #    f"Titre : {title}\n---\nDescription : {re.sub(r'<[^<]+?>', '', description)}\n"
         content_body = "\n".join(final_parts)
+        # page_content = f"{content_header}\n\n--- Détails ---\n{content_body}"
 
-        page_content = f"{content_header}\n\n--- Détails ---\n{content_body}"
+        # Contenu pour le document
+        cleaned_title = f"TITRE : {title}\n"
+        cleaned_description = f"DESCRIPTIF : {short}\n\n" if len(short) > 10 else ""
+        cleaned_content_body = f"--- CONTENU DÉTAILLÉ ---\n{content_body}\n"
+        # Assemblage du document final
+        page_content = cleaned_title + cleaned_description + cleaned_content_body
 
         # --- Métadonnées pour la source (pas vectorisé) ---
         # ----------------------------------------------------

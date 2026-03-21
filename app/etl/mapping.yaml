@@ -46,7 +46,7 @@ event_fields:
 metadata_fields:
   uid: "uid"
   url: "canonicalurl"
-  titre: "title_fr"
+  title: "title_fr"
   description: "description_fr"
   keywords: "keywords_fr"
   # Lieu

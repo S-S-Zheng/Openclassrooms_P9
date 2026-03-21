@@ -65,18 +65,21 @@ class Settings(BaseSettings):
     # =================== OpenAgenda ===================================
     openagenda_public_url: str
     """OBLIGATOIRE: URL OPEN AGENDA POUR FETCH DONNEES (CRASH SI ABSENT)"""
-    openagenda_updatedat: Optional[Union[List[str], str]] = "2025"
+    # openagenda_updatedat: Optional[Union[List[str], str]] = "2025"
+    openagenda_order_by: Optional[str] = "now()"
+    openagenda_firstdate_begin: Optional[str] = "2026"
+    """Début de la première date de l'event au format:
+    ISO 8601 (2017-04-03T08:02) ou YYYY/MM/DD (2018/04/01 ou même YYYY ou YYYY/MM)"""
     openagenda_location_city: Optional[Union[List[str], str]] = "Paris"
     openagenda_location_region: Optional[Union[List[str], str]] = "Île-de-France"
-    openagenda_limit: int = 20
-    """Limite du nombre de résultats"""
+    openagenda_limit: int = 10
+    """Limite du nombre de résultats. int [-1,100]"""
     openagenda_offset: int = 0
-    """Index du premier résultat renvoyé"""
+    """Index du premier résultat. int >=0. max(offset+limit)= 10000 sauf si +group_by= 20000"""
     openagenda_lang: Optional[str] = "fr"
-    """Code langue de 2 lettres"""
-    openagenda_timezone: Optional[Union[List[str], str]] = "Europe/Berlin"
-    """Le fuseau horaire utilisé pour interpréter les dates et heures dans la requête et
-    les données de la réponse."""
+    """Code langue de 2 lettres: 'en' 'fr' 'nl' 'pt' 'it' 'ar' 'de' 'es' 'ca' 'eu' 'sv' """
+    openagenda_timezone: Optional[Union[List[str], str]] = "UTC"
+    """Le fuseau horaire: 'UTC', 'Europe/Paris', 'US/Eastern', 'Europe/London', 'Europe/Berlin'."""
     openagenda_max_events: int = 50
     """Nb max events a ingérer par ré-indexation (/rebuild)."""
 

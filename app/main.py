@@ -34,11 +34,10 @@ from typing import AsyncGenerator
 from fastapi import APIRouter, FastAPI
 from fastapi.responses import RedirectResponse
 
+from app.api.routes.ask import router as ask_router
+from app.api.routes.rebuild import router as rebuild_router
 from app.core.config import get_settings
 from app.rag.rag_pipeline import EventRAGPipeline
-
-# from app.api.routes.ask import router as aks_router
-# from app.api.routes.rebuild import router as rebuild_router
 
 # ======================= Logging configuration =======================
 logging.basicConfig(
@@ -89,8 +88,8 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     rag = EventRAGPipeline(settings)
 
     # Tentative de chargement de l'index FAISS depuis le disque
-    loaded = await rag.load_index()
-    if loaded:
+    index_ready = await rag.load_index()
+    if index_ready:
         logger.info("Index FAISS chargé, service opérationnel")
     else:
         # Au lieu de faire planter le serveur si l'index FAISS est absent,
@@ -102,6 +101,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     # Stockage settings et RAG pour accessible partout
     app.state.settings = settings
     app.state.rag = rag
+    app.state.index_ready = index_ready  # Flag d'opérationnabilité
 
     yield  # le serveur accepte les requêtes à partir d'ici
 
@@ -158,7 +158,7 @@ def create_app() -> FastAPI:
     -------
     FastAPI
     """
-    settings = get_settings()
+    settings = get_settings()  # noqa: F841
 
     app = FastAPI(
         title="Système RAG evènementiel orienté IDF",
@@ -168,15 +168,19 @@ def create_app() -> FastAPI:
             "sur les événements culturels en Île-de-France."
         ),
         version="1.0.0",
-        docs_url="/docs" if settings.app_env != "production" else None,
-        redoc_url="/redoc" if settings.app_env != "production" else None,
+        # Si on avait un front-end d'actif:
+        # docs_url="/docs" if settings.app_env != "production" else None,
+        # redoc_url="/redoc" if settings.app_env != "production" else None,
+        swagger_ui_parameters={
+            "persistAuthorization": False
+        },  # Ne garde pas clé /rebuild en mémoire
         lifespan=lifespan,
     )
 
     # Applique la configuration des routes
     app.include_router(generic_router)
-    # app.include_router(ask_router)
-    # app.include_router(rebuild_router)
+    app.include_router(ask_router)
+    app.include_router(rebuild_router)
 
     return app
 

@@ -1,5 +1,5 @@
 """
-scripts/build_index.py
+CLI/build_index.py
 
 Script CLI autonome qui récupère les événements OpenAgenda, les traite,
 construit et sauvegarde l'index FAISS sans démarrer le serveur API.\n

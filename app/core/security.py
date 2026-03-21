@@ -21,20 +21,33 @@ pouvait l'utiliser, les attaques Dos seraient terrible.
 # d'une attaque temporelle.
 import secrets
 
-from fastapi import Header, HTTPException, status
+# L'utilisation de 'Security' au lieu de 'Depends' permet d'intégrer
+# automatiquement le bouton 'Authorize' dans la doc Swagger.
+# from fastapi import Header
+from fastapi import HTTPException, Security, status
+from fastapi.security import APIKeyHeader
 
 from app.core.config import get_settings
 
 # ========================================================================
 
+# On définit le schéma de sécurité pour Swagger
+# name="X-Rebuild-Key" est le nom exact de l'en-tête attendu
+rebuild_key_scheme = APIKeyHeader(
+    name="X-Rebuild-Key",
+    auto_error=False,
+    description="Clef API nécéssaire pour trigger l'indexation FAISS (/rebuild)",
+)
+
 
 async def require_rebuild_key(
-    x_rebuild_key: str = Header(
-        ...,
-        alias="X-Rebuild-Key",
-        description="Clef API nécéssaire pour trigger l'indexation FAISS (/rebuild)",
-    ),  # Header indique a FastApi de chercher la val dans header HTTP des requetes et pas l'URL
-) -> None:
+    # x_rebuild_key: str = Header(
+    #     ...,
+    #     alias="X-Rebuild-Key",
+    #     description="Clef API nécéssaire pour trigger l'indexation FAISS (/rebuild)",
+    # ),  # Header indique a FastApi de chercher la val dans header HTTP des requetes et pas l'URL
+    x_rebuild_key: str = Security(rebuild_key_scheme),
+) -> str:
     """
     Dépendance FastAPI injectée dans la route /rebuild.
 
@@ -47,8 +60,17 @@ async def require_rebuild_key(
         HTTPException 403 si la clé fournie ne correspond pas à REBUILD_API_KEY.
     """
     expected = get_settings().rebuild_api_key
-    if not secrets.compare_digest(x_rebuild_key, expected):
+    # if not secrets.compare_digest(x_rebuild_key, expected):
+    #     raise HTTPException(
+    #         status_code=status.HTTP_403_FORBIDDEN,
+    #         detail="Clé API /rebuild invalide ou manquante.",
+    #     )  # HTTP_403_FORBIDDEN == 'Je sais qui tu es/veux mais tu n'as pas le droit d'être ici'
+
+    # On vérifie si la clé est présente et correcte
+    if not x_rebuild_key or not secrets.compare_digest(x_rebuild_key, expected):
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Clé API /rebuild invalide ou manquante.",
-        )  # HTTP_403_FORBIDDEN == 'Je sais qui tu es/veux mais tu n'as pas le droit d'être ici'
+        )
+
+    return x_rebuild_key
