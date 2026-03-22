@@ -28,15 +28,18 @@ event_fields:
     api_key: "location_website"
     default: ""
   # Autres
+  - label: "Période"
+    api_key: "daterange_fr"
+    default: ""
+  - label: "Prix"
+    api_key: "condition_fr"
+    default: ""
   - label: "Acces"
     api_key: "location_access_fr"
     default: ""
   - label: "Handicap"
     api_key: "accessibility_label_fr"
     default: "accessibilité réduite"
-  - label: "Prix"
-    api_key: "condition_fr"
-    default: ""
 
 # PARTIE LOGIQUE
 # On y stocke les métadonnées qui vont servir de filtre logique.

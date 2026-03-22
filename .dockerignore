@@ -76,5 +76,3 @@ utils_out_of_app/
 data/faiss_index/
 data/faiss_index_testing/
 datas/ragas/
-datas/raw/
-CLI/

@@ -1,0 +1,14 @@
+[
+  {
+    "question": "Je cherche un truc fun à faire pour occuper les gosses dans la rue Mouffetard (lieu et contact)?",
+    "ground_truth": "'Pour les enfants !' pourrait vous interesser. C'est au 100, rue Mouffetard, Paris par contre aucun moyen de contact n'est mentionné."
+  },
+  {
+    "question": "Trouve moi un evènement autour de l'IA où l'on peut discuter et débattre sur ce sujet, pas cher et pour le 13 janvier (lieu, prix)?",
+    "ground_truth": "'[CaféIA #4] Découvrir l’IA' propose un espace d'écoute et de rencontre pour pouvoir débattre autour de l'IA. L'adresse de l'evènement est le 3 rue d'Aligre et l'entrée est gratuite"
+  },
+  {
+    "question": "Retrouve moi les informations sur un webinar concernant l'appel à projet AMSC (nom, date, conditions).",
+    "ground_truth": "'COFUND 2026 - Session d'information' est un webinar qui permet d'aider certaines structures à monter un programme de formation et de mobilité doctorale ou postdoctorale. Il se déroulera le 13 janvier 2026 à partir de 13h, en ligne et nécéssite de s'être inscrit au préalable."
+  }
+]
