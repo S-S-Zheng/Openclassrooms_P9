@@ -24,10 +24,8 @@ import secrets
 # L'utilisation de 'Security' au lieu de 'Depends' permet d'intégrer
 # automatiquement le bouton 'Authorize' dans la doc Swagger.
 # from fastapi import Header
-from fastapi import HTTPException, Security, status
+from fastapi import HTTPException, Request, Security, status
 from fastapi.security import APIKeyHeader
-
-from app.core.config import get_settings
 
 # ========================================================================
 
@@ -46,6 +44,7 @@ async def require_rebuild_key(
     #     alias="X-Rebuild-Key",
     #     description="Clef API nécéssaire pour trigger l'indexation FAISS (/rebuild)",
     # ),  # Header indique a FastApi de chercher la val dans header HTTP des requetes et pas l'URL
+    request: Request,
     x_rebuild_key: str = Security(rebuild_key_scheme),
 ) -> str:
     """
@@ -59,7 +58,10 @@ async def require_rebuild_key(
     ----------
         HTTPException 403 si la clé fournie ne correspond pas à REBUILD_API_KEY.
     """
-    expected = get_settings().rebuild_api_key
+    # expected = get_settings().rebuild_api_key
+    # On recupère la clef plutôt depuis l'app -> on s'assure que la clef est celle attendue
+    # a la création du service.
+    expected = request.app.state.settings.rebuild_api_key
     # if not secrets.compare_digest(x_rebuild_key, expected):
     #     raise HTTPException(
     #         status_code=status.HTTP_403_FORBIDDEN,

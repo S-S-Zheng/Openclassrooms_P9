@@ -53,10 +53,10 @@ async def inspect_index():
     for i, doc in enumerate(random_docs):
         title = doc.metadata.get("title") # type:ignore
         uid = doc.metadata.get("uid") # type:ignore
-        print(f"[{i+1}] {title} (ID: {uid})")
+        print(f"Doc #[{i+1}] | {title} | ID: {uid}")
         # On affiche un petit bout du contenu pour vérifier le texte
         extract = doc.page_content[:400].replace('\n', ' ') # type:ignore
-        print(f"    Extrait: {extract}...")
+        print(f"----- Extrait -----:\n{extract}...")
         print("-" * 50)
 
 

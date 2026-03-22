@@ -1,5 +1,5 @@
 """
-tests/test_fetcher.py
+tests/app/etl/test_fetcher.py
 
 tests concernant la pipeline ETL partie Fetching ``OpenAgendaFetcher``
 
@@ -57,6 +57,10 @@ class TestOpenAgendaFetcher:
         assert len(events) == 2
         assert events[0]["uid"] == 1
         assert events[1]["title_fr"] == "Événement B"
+        # On vérifie que nos filtres 'refine' sont présents
+        sent_params = mock_client.get.call_args.kwargs["params"]
+        assert "location_city:Paris" in sent_params["refine"]
+        assert "location_region:Île-de-France" in sent_params["refine"]
 
     # --------------------------------- Vérifie que max_events est bien respectée
     @pytest.mark.asyncio
@@ -116,6 +120,11 @@ class TestOpenAgendaFetcher:
         assert len(events) == 9
         # Vérifie que le client a été appelé deux fois (pagination active)
         assert mock_client.get.call_count == 2
+        # Vérifie que l'offset s'établie sur limit au second call
+        args_first_call = mock_client.get.call_args_list[0].kwargs["params"]
+        args_second_call = mock_client.get.call_args_list[1].kwargs["params"]
+        assert args_first_call["offset"] == 0
+        assert args_second_call["offset"] == 2
 
     # --------------------------------- Vérifie que la classe est stable si la réponse API est vide
     @pytest.mark.asyncio

@@ -18,9 +18,6 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any  # , AsyncGenerator
 
-# import pytest_asyncio # permet d'écrire des tests qui peuvent "attendre" (await) des réponses
-# Client spécialisé qui simule des requêtes HTTP sur FastAPI sans devoir lancer un vrai serveur Web.
-# from fastapi.testclient import TestClient
 # patch: Remplace temporairement une classe ou une fonction par un mock.
 # MagicMock: Un objet "caméléon" qui accepte n'importe quel appel de méthode.
 # AsyncMock: La version asynchrone pour simuler, par exemple, une base de données ou un client HTTP.
@@ -40,6 +37,10 @@ import numpy as np
 # ----------- Dépendances de base pour le testing ------------------
 import pytest
 
+# import pytest_asyncio # permet d'écrire des tests qui peuvent "attendre" (await) des réponses
+# Client spécialisé qui simule des requêtes HTTP sur FastAPI sans devoir lancer un vrai serveur Web.
+from fastapi.testclient import TestClient
+
 # Dictionnaire en mémoire qui fait le lien entre ID d'un vecteur dans FAISS et ``Document``
 from langchain_community.docstore.in_memory import InMemoryDocstore
 
@@ -55,12 +56,13 @@ from langchain_core.documents import Document
 # from tenacity import retry, stop_after_attempt, wait_exponential
 # --------- Perso -------------
 from app.etl.processor import EventDocumentProcessor
+from app.main import create_app
 from app.rag.rag_pipeline import EventRAGPipeline
 
 # =============================== DATAS =====================================
 
 
-# SETTINGS
+# ------------------------------ SETTINGS
 @pytest.fixture(scope="session")
 def fake_settings():
     """
@@ -84,7 +86,9 @@ def fake_settings():
         chunk_overlap=50,
         # =================== OpenAgenda ===================================
         openagenda_public_url="test-oa-url",
-        openagenda_updatedat="2025",
+        # openagenda_updatedat="2025",
+        openagenda_order_by="now()",
+        openagenda_firstdate_begin="2026",
         openagenda_location_city="Paris",
         openagenda_location_region="Île-de-France",
         openagenda_limit=20,
@@ -104,7 +108,7 @@ def fake_settings():
     )
 
 
-# RAW_DATAS
+# ------------------------------ RAW_DATAS
 @pytest.fixture(scope="session")
 def raw_events() -> list[dict[str, Any]]:
     """
@@ -255,7 +259,7 @@ def raw_events() -> list[dict[str, Any]]:
     ]
 
 
-# # Document LangChain
+# # ------------------------------ Document LangChain
 # @pytest.fixture(scope="session")
 # def sample_documents() -> list[Document]:
 #     """
@@ -333,7 +337,7 @@ def sample_documents(raw_events, fake_settings) -> list[Document]:
     return documents
 
 
-# Réponse LLM sur le premier document
+# ------------------------------ Réponse LLM sur le premier document
 @pytest.fixture(scope="session")
 # def fake_llm_response() -> str:
 #     """Réponse LLM pré-enregistrée."""
@@ -346,7 +350,7 @@ def fake_llm_response() -> str:
     return "..."
 
 
-# =================================================================================================
+# ============================== EMBEDDING ============================================
 
 
 class _FakeEmbeddings:
@@ -380,7 +384,7 @@ def fake_embeddings() -> _FakeEmbeddings:
     return _FakeEmbeddings(size=384)
 
 
-# ── RAG pipeline fixture ───────────────────────────────────────────────────────
+# ============================== RAG pipeline ==============================
 
 
 # Pas besoin de pytest_asyncio.fixture ici si on ne fait pas d'await
@@ -425,20 +429,60 @@ def rag_pipeline_with_index(fake_settings, sample_documents, fake_embeddings):
     return pipeline
 
 
-# ── FastAPI test client fixture ────────────────────────────────────────────────
+# ============================== FastAPI ==============================
 
-# @pytest.fixture
-# def test_app(fake_settings, rag_pipeline_with_index):
-#     """
-#     Return a FastAPI ``TestClient`` with the RAG pipeline pre-loaded and
-#     all external dependencies patched.
-#     """
-#     from app.main import create_app
 
-#     application = create_app()
-#     # Bypass lifespan by injecting state directly
-#     application.state.settings = fake_settings
-#     application.state.rag = rag_pipeline_with_index
+# --------------- Version sobre d'un client test
+@pytest.fixture
+def client():
+    """
+    Fournit un TestClient FastAPI configuré avec une session de base de données de test.
+    Gère le cycle de vie (lifespan) de l'application pour chaque test.
+    """
+    """
+    Fournit un client HTTP configuré pour tester les endpoints de l'API.
 
-#     with TestClient(application, raise_server_exceptions=True) as client:
-#         yield client
+    Cette fixture utilise le 'TestClient' de FastAPI au sein d'un gestionnaire
+    de contexte afin de déclencher les événements 'lifespan' (startup/shutdown).
+    Cela permet notamment de charger en mémoire ce qui est nécéssaire avant l'exécution
+    des tests.
+
+    Yields:
+        TestClient: Une instance de client capable d'effectuer des requêtes (GET, POST, etc.).
+    """
+    app = create_app()
+
+    with TestClient(app) as test_client:
+        yield test_client
+
+
+# ------------ Version Ready to use
+@pytest.fixture
+def mock_client_ready(fake_settings, rag_pipeline_with_index):
+    """
+    Mock un FastAPI ``TestClient` avec la pipeline RAG avec index chargé,
+    tous les paramètres et dépendances faked.
+    """
+    application = create_app()
+
+    # Bypass le lifespan via injection directe des paramètres et du RAG
+    application.state.settings = fake_settings
+    application.state.rag = rag_pipeline_with_index
+    application.state.index_ready = True
+
+    with TestClient(application, raise_server_exceptions=True) as client:
+        yield client
+
+
+# ------------ Version NotReady to use
+@pytest.fixture
+def mock_client_unready(fake_settings, rag_pipeline_with_index):
+    """Une version de l'app où l'index est marqué comme non-prêt."""
+    application = create_app()
+
+    with TestClient(application) as client:
+        application.state.settings = fake_settings
+        application.state.rag = rag_pipeline_with_index
+        application.state.index_ready = False
+
+        yield client

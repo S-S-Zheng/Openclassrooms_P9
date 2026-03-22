@@ -1,5 +1,5 @@
 """
-tests/test_processor.py
+tests/app/etl/test_processor.py
 ──────────────────────
 Unit tests for the etl pipeline:
 
@@ -51,7 +51,7 @@ class TestEventDocumentProcessor:
     # ------------------  Vérifie les keys dans metadata_fields
     def test_document_metadata_keys(self, processor, raw_events):
         """Vérifie la présence des clés de métadonnées essentielles."""
-        required_keys = {"uid", "titre", "city", "url", "date_start"}
+        required_keys = {"uid", "title", "city", "url", "date_start"}
         docs = processor.process(raw_events)
 
         # Assertions

@@ -66,6 +66,26 @@ async def test_run_rag_on_qa_logic(fake_llm_response):
     assert results[0]["contexts"] == ["Contexte 1"]
 
 
+# ---------------- Vérifie qu'en cas de crash innatendu, l'API retourne une réponse vide
+@pytest.mark.unit
+@pytest.mark.asyncio
+async def test_run_rag_on_qa_error_handling():
+    """Vérifie que run_rag_on_qa gère un crash du RAG."""
+    # Mock du RAG qui lève une exception (simule un crash)
+    mock_rag = MagicMock()
+    mock_rag.query = AsyncMock(side_effect=Exception("Crash test RAG"))
+    qa_pairs = [{"question": "Où ?", "ground_truth": "Ici"}]
+
+    results = await run_rag_on_qa(mock_rag, qa_pairs)
+
+    # Assertions
+    # On vérifie que le système a survécu et a fallback
+    assert len(results) == 1
+    assert results[0]["answer"] == ""
+    assert results[0]["contexts"] == []
+    assert results[0]["question"] == "Où ?"
+
+
 # ---------------- Vérifie la préparation du document pour ``ragas.evaluate()``
 @pytest.mark.unit
 def test_prepare_for_ragas_mapping(fake_llm_response):

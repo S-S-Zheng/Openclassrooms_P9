@@ -57,14 +57,13 @@ async def ask(
 
     try:
         result = await rag.query(question=payload.question, top_k=payload.top_k)
-    except RuntimeError as exc:
-        # Index non prêt — ne devrait pas arriver si la dépendance get_rag est correcte,
-        # mais nous protégeons de manière défensive.
-        logger.error(f"La requête RAG a échoué : {exc}")
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail=str(exc),
-        ) from exc
+    ## Plus nécéssaire car get_rag() s'assure que ca ne se produise pas!
+    # except RuntimeError as exc:
+    #     logger.error(f"La requête RAG a échoué : {exc}")
+    #     raise HTTPException(
+    #         status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+    #         detail=str(exc),
+    #     ) from exc
     except Exception as exc:
         logger.exception(f"Erreur inattendue pendant la requête: {payload.question}")
         raise HTTPException(
