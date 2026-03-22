@@ -1,5 +1,5 @@
 """
-tests/test_rag.py
+tests/app/rag/test_rag.py
 
 Tous les appels API Mistral (embeddings + LLM) sont interceptés par la fixture
 ``rag_pipeline_with_index`` dans conftest.py, qui injecte un
