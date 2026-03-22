@@ -26,6 +26,7 @@ dependencies = [
     "mistralai (>=1.5.0)",
     "instructor (>=1.5.0)",
     "litellm (>=1.82.1,<2.0.0)",
+    "joblib (>=1.5.3,<2.0.0)",
 ]
 
 [tool.poetry]

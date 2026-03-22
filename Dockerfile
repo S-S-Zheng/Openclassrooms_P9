@@ -40,16 +40,23 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 # Création de l'utilisateur non-root
 RUN useradd -m -u 1000 raguser
-USER raguser
-ENV PATH="/app/.venv/bin:/home/raguser/.local/bin:${PATH}" \
-    PYTHONPATH="/app"
 
+# On définit le dossier de travail à la racine de l'application
 WORKDIR /app
+
+ENV PATH="/app/.venv/bin:/home/raguser/.local/bin:${PATH}" \
+    PYTHONPATH="/app" \
+    PYTHONUNBUFFERED=1
+
+# WORKDIR /app
 
 # On récupère l'environnement virtuel créé à l'étape précédente
 COPY --from=builder --chown=raguser /app/.venv /app/.venv
 # On copie le code source
 COPY --chown=raguser . .
+
+# utilisateur non-root pour la sécurité
+USER raguser
 
 EXPOSE 8000
 
