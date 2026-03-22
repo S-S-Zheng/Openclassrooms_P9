@@ -1,0 +1,63 @@
+version: "3.9"
+
+# ==================================== Assistant RAG ====================================
+#
+# Utilisation :
+#   1. Copier .env.example vers .env et remplir les clés API.
+#   2. docker compose up --build
+#   3. Ouvrir http://localhost:8000/docs pour explorer l'API.
+#   4. Déclencher la construction de l'index : POST /rebuild avec le header X-Rebuild-Key.
+#
+# Le répertoire « data » est monté en tant que volume afin que l'index FAISS 
+# persiste après les redémarrages du conteneur.
+# ========================================================================================
+
+services:
+  rag-assistant:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      # Utilise uniquement l'étape finale du Dockerfile
+      target: runtime
+    image: rag-assistant:latest
+    container_name: rag_assistant_container
+
+    # Charge les variables d'envirronement notamment les clefs API
+    env_file:
+      - .env
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      # Lie le dossier /app/data du conteneur au volume Docker nommé
+      # (presistence de l'index entre les restarts)
+      - rag_index_data:/app/data
+
+    healthcheck:
+      # Vérifie que l'API répond bien sur l'endpoint health
+      # Utilise python car curl n'est pas forcément installé dans l'image slim
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+
+    restart: unless-stopped
+
+    # On limite les ressources car c'est un POC
+    deploy:
+      resources:
+        limits:
+          cpus: "2"
+          memory: 2G
+
+volumes:
+  rag_index_data:
+    driver: local

@@ -30,10 +30,12 @@ pip-log.txt
 pip-delete-this-directory.txt
 *.pyc
 .venv/
+.env.example
 
 
 # --- Tests & Qualité ---
 tests/
+.cache/
 .pytest_cache/
 .ruff_cache/
 .coverage
@@ -43,7 +45,7 @@ coverage.xml
 *.lprof
 coverage.ini
 pytest.ini
-coverage.ini
+
 
 # --- Build / Dist ---
 build/
@@ -62,6 +64,7 @@ wheels/
 
 # --- Artefacts inutiles ---
 README.md
+README_.md
 LICENSE
 
 # ---- En plus --------
@@ -70,8 +73,8 @@ src/
 utils_out_of_app/
 
 # Données
+data/faiss_index/
+data/faiss_index_testing/
+datas/ragas/
 datas/raw/
-datas/results/figures/
-datas/results/data_drift/
-datas/results/pipe_opt/
-datas/results/profiling_reports/
+CLI/
